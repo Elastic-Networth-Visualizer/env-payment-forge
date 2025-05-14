@@ -20,20 +20,19 @@ import {
   TransactionRefund,
   TransactionSearchFilters,
   UpdateCustomerRequest,
+  PaymentProvider,
+  RiskAssessment
 } from "../types/index.ts";
 
-import { TransactionManager } from "./TransactionManager.ts";
-import { PaymentMethodManager } from "./PaymentMethodManager.ts";
-import { RecurringBillingManager } from "./RecurringBillingManager.ts";
-import { RefundProcessor } from "./RefundProcessor.ts";
-import { DisputeManager } from "./DisputeManager.ts";
-import { FraudDetector } from "../fraud/FraudDetector.ts";
-import { RiskAssessment } from "../types/payment.ts";
-import { PaymentProvider, Provider } from "../types/provider.ts";
-import { validatePaymentRequest } from "../utils/validation.ts";
-import { Logger } from "../utils/logger.ts";
-import { ConfigurationError, PaymentError, toPaymentError } from "../errors/payment.ts";
-import { ProviderRegistry } from "../providers/ProviderRegistry.ts";
+import { TransactionManager } from "./transaction_manager.ts";
+import { PaymentMethodManager } from "./payment_method_manager.ts";
+import { RecurringBillingManager } from "./recurring_billing_manager.ts";
+import { RefundProcessor } from "./refund_processor.ts";
+import { DisputeManager } from "./dispute_manager.ts";
+import { FraudDetector } from "../fraud/index.ts";
+import { Logger, validatePaymentRequest } from "../utils/index.ts";
+import { ConfigurationError, PaymentError, toPaymentError } from "../errors/index.ts";
+import { ProviderRegistry } from "../providers/index.ts";
 
 /**
  * Main payment processor class for handling all payment operations
@@ -712,7 +711,7 @@ export class PaymentProcessor {
   private async registerProviders(): Promise<void> {
     // Register card providers if configured
     if (this.config.apiKeys.stripeKey) {
-      const { StripeCardAdapter } = await import("../providers/card/StripeCardAdapter.ts");
+      const { StripeCardAdapter } = await import("../providers/card/stripe_card_adapter.ts");
       this.providerRegistry.registerProvider(
         "card",
         new StripeCardAdapter({
@@ -721,7 +720,7 @@ export class PaymentProcessor {
         }),
       );
     } else {
-      const { GenericCardProvider } = await import("../providers/card/GenericCardProvider.ts");
+      const { GenericCardProvider } = await import("../providers/card/generic_card_provider.ts");
       this.providerRegistry.registerProvider(
         "card",
         new GenericCardProvider({
@@ -732,7 +731,7 @@ export class PaymentProcessor {
 
     // Register ACH provider if configured
     if (this.config.apiKeys.plaidClientId && this.config.apiKeys.plaidSecret) {
-      const { PlaidBankAdapter } = await import("../providers/bank/PlaidBankAdapter.ts");
+      const { PlaidBankAdapter } = await import("../providers/bank/plaid_bank_adapter.ts");
       this.providerRegistry.registerProvider(
         "ach",
         new PlaidBankAdapter({
@@ -745,7 +744,7 @@ export class PaymentProcessor {
 
     // Register SEPA provider if configured
     if (this.config.apiKeys.stripeKey) {
-      const { SEPAProvider } = await import("../providers/bank/SEPAProvider.ts");
+      const { SEPAProvider } = await import("../providers/bank/sepa_provider.ts");
       this.providerRegistry.registerProvider(
         "sepa",
         new SEPAProvider({
